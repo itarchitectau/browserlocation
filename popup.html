@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Location Spoofer</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="icons/icon48.png" alt="icon" class="logo" />
+      <h1>Location Spoofer</h1>
+    </header>
+
+    <div class="toggle-row">
+      <label class="toggle-label" for="enableToggle">Spoof enabled</label>
+      <label class="switch">
+        <input type="checkbox" id="enableToggle" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label for="latitude">Latitude</label>
+      <input type="number" id="latitude" step="any" min="-90" max="90" placeholder="e.g. 51.5074" />
+    </div>
+
+    <div class="form-group">
+      <label for="longitude">Longitude</label>
+      <input type="number" id="longitude" step="any" min="-180" max="180" placeholder="e.g. -0.1278" />
+    </div>
+
+    <div class="form-group">
+      <label for="accuracy">Accuracy (metres)</label>
+      <input type="number" id="accuracy" step="1" min="1" placeholder="e.g. 50" />
+    </div>
+
+    <section class="presets">
+      <p class="presets-title">Quick presets</p>
+      <div class="preset-grid" id="presetGrid"></div>
+    </section>
+
+    <button id="applyBtn" class="btn-primary">Apply &amp; Reload Tab</button>
+    <p id="status" class="status"></p>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

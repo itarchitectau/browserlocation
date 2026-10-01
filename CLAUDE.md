@@ -21,26 +21,25 @@ Chrome content scripts run in an **ISOLATED world** — they can call `chrome.*`
 
 ### How the override is delivered
 
-`content.js` runs in the ISOLATED world at `document_start` (before any page script). It:
+`background.js` listens to `chrome.webNavigation.onCommitted` (fires before page scripts run). On each main-frame navigation it:
 1. Reads settings from `chrome.storage.local`
-2. Bakes the coordinate values into a self-contained IIFE string
-3. Appends a `<script>` element to `document.documentElement`, which executes synchronously in the MAIN world
-4. Immediately removes the element from the DOM
+2. Calls `chrome.scripting.executeScript` with `world: 'MAIN'` and `injectImmediately: true`, passing the spoof function and coordinates as arguments
 
-This inline-script injection is the only reliable way to patch MAIN-world globals from a content script in MV3 (the `world: "MAIN"` content script option cannot access `chrome.storage`, so settings cannot be passed to it without this bridge).
+`chrome.scripting.executeScript` injections bypass the page's Content Security Policy — they are applied by Chrome's extension host process, not by the renderer's inline-script checks. This is the correct MV3 replacement for the old `<script>` tag injection pattern.
 
 ### Settings flow
 
 ```
-popup.js  →  chrome.storage.local  →  content.js (on next page load)
+popup.js  →  chrome.storage.local
           →  chrome.runtime.sendMessage(SETTINGS_UPDATED)
           →  background.js reloads active tab
+          →  webNavigation.onCommitted fires → executeScript injects spoof
 ```
 
 Settings are stored under the key `locationSpoofer` as `{ enabled, latitude, longitude, accuracy }`.
 
 ### Key constraints to preserve
 
-- `content.js` must stay as an ISOLATED-world script (`run_at: document_start`, no `world` key in manifest). Do not move spoofing logic directly into a `world: "MAIN"` content script — it would lose access to `chrome.storage.local`.
-- The inline script must bake values as numeric literals, not pass them via DOM attributes, to avoid XSS concerns from arbitrary storage values being injected into page HTML.
+- Keep the spoof function (`spoofGeolocation`) as a named top-level function in `background.js`. `executeScript` serialises the function reference — it cannot close over service-worker variables, so coordinates must be passed via `args`.
 - `background.js` is a service worker — no DOM access, no persistent state outside `chrome.storage`.
+- There is no content script. Do not reintroduce an inline `<script>` tag injection approach — it is blocked by strict CSP pages.
